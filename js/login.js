@@ -1,34 +1,41 @@
-document.addEventListener('DOMContentLoaded', () => {
+function readUsers() {
+  try { return JSON.parse(localStorage.getItem('users') || '[]'); } catch { return []; }
+}
 
+document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('loginForm');
-  const msg = document.getElementById('loginMsg');
+  const msg = document.getElementById('msg');
+
+  if (!form) return;
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
 
     const email = document.getElementById('email').value.trim().toLowerCase();
-    const pwd = document.getElementById('password').value;
+    const password = document.getElementById('password').value;
 
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const user = users.find(u => u.email === email && u.password === pwd);
-
-    if (!user) {
-      msg.innerHTML = '<div class="alert alert-danger">Identifiants incorrects.</div>';
+    if (!email || !password) {
+      msg.innerHTML = '<div class="alert alert-warning">Remplis l\'email et le mot de passe.</div>';
       return;
     }
 
-    localStorage.setItem('currentUser', JSON.stringify(user));
+    const users = readUsers();
+    const user = users.find(u => u.email === email);
 
-    msg.innerHTML = '<div class="alert alert-success">Connexion réussie !</div>';
+    if (!user || user.password !== password) {
+      msg.innerHTML = '<div class="alert alert-danger">E-mail ou mot de passe incorrect.</div>';
+      return;
+    }
+
+    const session = { id: user.id, name: user.name, email: user.email, role: user.role };
+    localStorage.setItem('currentUser', JSON.stringify(session));
 
     if (user.role === 'admin') {
-      setTimeout(() => window.location.href = "../pages/admin.html", 500);
-    } 
-    else if (user.role === 'moderator') {
-      setTimeout(() => window.location.href = "../pages/backoffice.html", 500);
-    }
-    else {
-      setTimeout(() => window.location.href = "../pages/calendar.html", 500);
+      window.location.href = '../pages/admin.html';
+    } else if (user.role === 'moderator') {
+      window.location.href = '../pages/backoffice.html';
+    } else {
+      window.location.href = '../pages/calendar.html';
     }
   });
 });
